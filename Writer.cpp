@@ -15,7 +15,7 @@ class Writer {
     public:
         Writer();
         static void log(string message) {
-            cout << "Writer:" << getpid() << ": " << message << endl;     
+            cout << "Writer: " << getpid() << ": " << message << endl;     
         }
         void write();
 };
@@ -38,7 +38,7 @@ void Writer::write() {
     if(shmdt(data) == -1) {
         log("Detachment problems.");
     } else {
-        log("Detached.");
+        log("Detached!");
     }
      
 }

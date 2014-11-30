@@ -27,7 +27,7 @@ Reader::Reader() {
 void Reader::read() {
     key_t key = ftok("/Users/irmak/Dropbox/SWE/SWE573/2/p2/code/hede.txt", 'E');
     log("Accessing to shared memory segment...");
-    int shmid = shmget(key, sizeof(int), 0666|IPC_CREAT);
+    int shmid = shmget(key, sizeof(int), 0666);
     int *data = (int *)shmat(shmid, (void *)0, 0);
     log("Shared memory region is accessed!");
     log("Value of the shared memory: " + to_string(*data));

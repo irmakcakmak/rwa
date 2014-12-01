@@ -27,8 +27,13 @@ class Writer {
             cout << "Writer: " << getpid() << ": " << message << endl;     
         }
         void write();
+        void prepareForWrite();
         void execute();
 };
+
+void Writer::prepareForWrite() {
+    std::this_thread::sleep_for(std::chrono::milliseconds(1231));
+}
 
 void Writer::execute() {
     log("Started execution.");
@@ -81,7 +86,6 @@ void Writer::write() {
     log(to_string(shmid));
     int *data = (int *)shmat(shmid, (void *)0, 0);
     log("Shared memory region is accessed!"); 
-    std::this_thread::sleep_for(std::chrono::milliseconds(1231));
     log("Value of the shared memory: " + to_string(*data));
     log("Incrementing count variable...");
     *data += 1;
@@ -98,6 +102,7 @@ void Writer::write() {
 int main(int argc, char* argv[]) {
     cout.setf(std::ios::unitbuf);
     Writer writer(1000);
+    writer.prepareForWrite();
     if(!writer.down()) {
         Writer::log("Down semaphore failed!");
         exit(EXIT_FAILURE);

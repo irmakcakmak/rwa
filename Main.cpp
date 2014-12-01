@@ -15,41 +15,39 @@
 using namespace std;
 
 int main(void) {
+    cout.setf(std::ios::unitbuf);
     key_t key = ftok("/Users/irmak/Dropbox/SWE/SWE573/2/p2/code/hede.txt", 'E');
-    cout << key << endl;
     cout << "Creating shared memory" << endl;
     int shmid = shmget(key, sizeof(int), 0666|IPC_CREAT);
-    cout << shmid << endl;
     cout << "Initializing shared memory variable to 0" << endl;
     int *data = (int *)shmat(shmid, (void *)0, 0);
     *data = 0;
-    cout << "Initialization is complete..." << endl;
-    cout << "Detaching" << endl;
+    cout << "Shared memory initialization is complete..." << endl;
 
+    cout << "Initializing write semaphore...";
     union semun {
         int val;
         struct semid_ds *buf;
         ushort *array;    
     } arg;
 
-    arg.val = 0;
+    arg.val = 1;
 
     int semid = semget(SEM_KEY, 1, 0666|IPC_CREAT);
-    cout << "semid: " << semid << endl;
     if(semctl(semid, 0, SETVAL, arg) < 0) {
-        cout << "Cannot set semaphore value." << endl;
+        cout << "Error initializing writer semaphore." << endl;
+        perror("REASON: ");
+        exit(EXIT_FAILURE);
     } else {
         cout << "Semaphore initialized: " << SEM_KEY << endl;
     }
 
+    srand(time(NULL));
     for(int i = 0; i < 10; i++) {
         int pid = fork();
-        int status = 0;
+        int randomNumber = rand() % 2;
+        cout << "Random number:" << randomNumber << endl;
         if (pid == 0) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1231));
-            srand(time(0));
-            int randomNumber = rand() % 2;
-            cout << randomNumber << endl;
             if(randomNumber) {
                 execl("reader", NULL);
             } else {
@@ -57,10 +55,13 @@ int main(void) {
             }
             cout << "Child process." << endl;
         } else {
-            wait(&status);
             cout << "Parent process." << getpid() <<endl;
         }
     }
+    for (int i = 0; i < 10; i++) {
+        wait(NULL);
+    }
+
     if (shmdt(data) == -1) {
         cout << "Detachment problems." << endl;
     } else {

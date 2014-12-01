@@ -16,16 +16,28 @@
 using namespace std;
 
 class Writer {
+    private:
+        int executeLoopCount;
     public:
         int semaphoreId;
         int up();
         int down();
-        Writer();
+        Writer(int);
         static void log(string message) {
             cout << "Writer: " << getpid() << ": " << message << endl;     
         }
         void write();
+        void execute();
 };
+
+void Writer::execute() {
+    log("Started execution.");
+    int j = 0;
+    for (int i = 0; i < this->executeLoopCount; i++) {
+        j++;
+    }
+    log("Finished execution.");
+}
 
 int Writer::down() {
     struct sembuf ops[1];
@@ -39,7 +51,7 @@ int Writer::down() {
     int retval = semop(id, ops, 1);
     log("Down sem_id: " + to_string(this->semaphoreId));
     if (retval == 0) {
-        log("Semaphore operation is successful.");
+        log("Semaphore down is successful.");
         return(1);
     }
     perror("REASON");
@@ -54,13 +66,14 @@ int Writer::up() {
     sem_b.sem_flg = 0;
     int id = semget(SEM_KEY, 1, 0666);
     if (semop(id, &sem_b, 1) == 0) {
-        log("Semaphore operation is successful.");
+        log("Semaphore up is successful.");
         return(1);
     }
     return(0);
 }
 
-Writer::Writer() {
+Writer::Writer(int loopCount) {
+    this->executeLoopCount = loopCount;
 }
 
 void Writer::write() {
@@ -68,7 +81,8 @@ void Writer::write() {
     int shmid = shmget(key, sizeof(int), 0666);
     log(to_string(shmid));
     int *data = (int *)shmat(shmid, (void *)0, 0);
-    log("Shared memory region is accessed!");
+    log("Shared memory region is accessed!"); 
+    std::this_thread::sleep_for(std::chrono::milliseconds(4231));
     log("Value of the shared memory: " + to_string(*data));
     log("Incrementing count variable...");
     *data += 1;
@@ -84,18 +98,19 @@ void Writer::write() {
 
 int main(int argc, char* argv[]) {
 
-    Writer writer;
-    if(!writer.up()) {
+    Writer writer(1000);
+    if(!writer.down()) {
         Writer::log("Down semaphore failed!");
         exit(EXIT_FAILURE);
     }
     Writer::log("In critical region.");
     writer.write();
-    if(!writer.down()) {
+    if(!writer.up()) {
         Writer::log("Up semaphore failed!");
         exit(EXIT_FAILURE);
     }
     Writer::log("Critical section ended.");
+    writer.execute();
     return 0;
     
 }

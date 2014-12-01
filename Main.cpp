@@ -17,6 +17,7 @@ using namespace std;
 
 int main(void) {
     cout.setf(std::ios::unitbuf);
+    /* Create shared memory variable for count  */
     key_t key = ftok("hede.txt", 'E');
     cout << "Creating shared memory" << endl;
     int shmid = shmget(key, sizeof(int), 0666|IPC_CREAT);
@@ -25,6 +26,7 @@ int main(void) {
     *data = 0;
     cout << "Shared memory initialization is complete..." << endl;
 
+    /* Create shared memory variable for reader count */
     key_t readKey = ftok("readcount.txt", 'E');
     cout << "Creating shared memory for read count." << endl;
     int readShmid = shmget(readKey, sizeof(int), 0666|IPC_CREAT);
@@ -33,8 +35,7 @@ int main(void) {
     *readCount = 0;
     cout << "Shared memory for read count initialization is complete..." << endl;
 
-
-    cout << "Initializing write semaphore...";
+    /* Initialize semaphores  */
     union semun {
         int val;
         struct semid_ds *buf;
@@ -43,25 +44,27 @@ int main(void) {
 
     arg.val = 1;
 
+    /* Initialize writer semaphore  */
     int semid = semget(SEM_KEY, 1, 0666|IPC_CREAT);
     if(semctl(semid, 0, SETVAL, arg) < 0) {
         cout << "Error initializing writer semaphore." << endl;
         perror("REASON: ");
         exit(EXIT_FAILURE);
     } else {
-        cout << "Semaphore initialized: " << SEM_KEY << endl;
+        cout << "Writer semaphore initialized: " << SEM_KEY << endl;
     }
 
+    /* Initialize reader semaphore  */
     int readid = semget(READ_KEY, 1, 0666|IPC_CREAT);
     if(semctl(readid, 0, SETVAL, arg) < 0) {
         cout << "Error init read sema." << endl;
         perror("REASON: ");
         exit(EXIT_FAILURE);    
     } else {
-        cout << "Read semaphore init." << READ_KEY << endl;    
+        cout << "Read semaphore initialized: " << READ_KEY << endl;    
     }
 
-    srand(time(NULL));
+    /* Fork readers */
     for(int i = 0; i < 5; i++) {
         int pid = fork();
         if (pid == 0) {    
@@ -72,6 +75,8 @@ int main(void) {
         }
 
     }
+
+    /* Fork writers */
     for(int i = 0; i < 5; i++) {
         int pid = fork();
         if (pid == 0) {    
@@ -83,22 +88,30 @@ int main(void) {
 
     }
 
+    /* Wait for children to die */
     for (int i = 0; i < 10; i++) {
         wait(NULL);
     }
 
+    /* Clean up shared memory and semaphores  */
     if (shmdt(data) == -1) {
         cout << "Detachment problems." << endl;
     } else {
-        cout << "Detached" << endl;
+        cout << "Shared memory detached." << endl;
     }
-    shmdt(readCount);
+    if (shmdt(readCount) == -1) {
+        cout << "Detachment problems." << endl;
+    } else {
+        cout << "Shared memory detached." << endl;
+    }
 
-    cout << "Releasing shared memory" << endl;
+    cout << "Releasing shared memory..." << endl;
     shmctl(shmid, IPC_RMID, NULL);
     shmctl(readShmid, IPC_RMID, NULL);
-    cout << "Deleting semaphore" << endl;
+    cout << "Shared memory is released." << endl;
+    cout << "Deleting semaphores..." << endl;
     semctl(semid, 0, IPC_RMID);
     semctl(readid, 0, IPC_RMID);
+    cout << "Semaphores releases." << endl;
     return 0;
 }

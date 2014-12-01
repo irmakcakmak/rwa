@@ -96,7 +96,7 @@ void Writer::write() {
 }
 
 int main(int argc, char* argv[]) {
-
+    cout.setf(std::ios::unitbuf);
     Writer writer(1000);
     if(!writer.down()) {
         Writer::log("Down semaphore failed!");

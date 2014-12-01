@@ -39,7 +39,7 @@ int Reader::up() {
     sem_b.sem_flg = 0;
     int id = semget(READ_KEY, 1, 0666);
     if (semop(id, &sem_b, 1) == 0) {
-        log("Up success");
+        log("Read count mutex up success!");
         return(1);    
     }
     return(0);
@@ -52,7 +52,7 @@ int Reader::writerUp() {
     sem_b.sem_flg = 0;
     int id = semget(WRITE_KEY, 1, 0666);
     if (semop(id, &sem_b, 1) == 0) {
-        log("Up success");
+        log("Reader ups writer mutex.");
         return(1);    
     }
     return(0);
@@ -66,7 +66,7 @@ int Reader::down() {
     sem_b.sem_flg = 0;
     int id = semget(READ_KEY, 1, 0666);
     if (semop(id, &sem_b, 1) == 0) {
-        log("Up success");
+        log("Read count mutex down success.");
         return(1);    
     }
     return(0);
@@ -79,7 +79,7 @@ int Reader::writerDown() {
     sem_b.sem_flg = 0;
     int id = semget(WRITE_KEY, 1, 0666);
     if (semop(id, &sem_b, 1) == 0) {
-        log("Up success");
+        log("Reader downs writer mutex.");
         return(1);    
     }
     return(0);
@@ -136,12 +136,22 @@ int Reader::increment(int t) {
 }
 
 int main(void) {
+    cout.setf(std::ios::unitbuf);
     Reader reader(1479);
     reader.down();
     int readCount = reader.increment(1);
+    if (readCount == 1) {
+        reader.writerDown();
+    }
     Reader::log("Read count in critical: " + to_string(readCount));
     reader.up();
     reader.read();
+    reader.down();
+    readCount = reader.increment(-1);
+    if(readCount == 0) {
+        reader.writerUp();
+    }
+    reader.up();
     reader.execute();
     return 0;
 }

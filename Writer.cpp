@@ -77,12 +77,12 @@ Writer::Writer(int loopCount) {
 }
 
 void Writer::write() {
-    key_t key = ftok("/Users/irmak/Dropbox/SWE/SWE573/2/p2/code/hede.txt", 'E');
+    key_t key = ftok("hede.txt", 'E');
     int shmid = shmget(key, sizeof(int), 0666);
     log(to_string(shmid));
     int *data = (int *)shmat(shmid, (void *)0, 0);
     log("Shared memory region is accessed!"); 
-    std::this_thread::sleep_for(std::chrono::milliseconds(4231));
+    std::this_thread::sleep_for(std::chrono::milliseconds(1231));
     log("Value of the shared memory: " + to_string(*data));
     log("Incrementing count variable...");
     *data += 1;

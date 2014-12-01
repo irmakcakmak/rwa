@@ -16,7 +16,7 @@ using namespace std;
 
 int main(void) {
     cout.setf(std::ios::unitbuf);
-    key_t key = ftok("/Users/irmak/Dropbox/SWE/SWE573/2/p2/code/hede.txt", 'E');
+    key_t key = ftok("hede.txt", 'E');
     cout << "Creating shared memory" << endl;
     int shmid = shmget(key, sizeof(int), 0666|IPC_CREAT);
     cout << "Initializing shared memory variable to 0" << endl;
@@ -43,21 +43,27 @@ int main(void) {
     }
 
     srand(time(NULL));
-    for(int i = 0; i < 10; i++) {
+    for(int i = 0; i < 5; i++) {
         int pid = fork();
-        int randomNumber = rand() % 2;
-        cout << "Random number:" << randomNumber << endl;
-        if (pid == 0) {
-            if(randomNumber) {
-                execl("reader", NULL);
-            } else {
-                execl("writer", NULL);
-            }
-            cout << "Child process." << endl;
+        if (pid == 0) {    
+            std::this_thread::sleep_for(std::chrono::milliseconds(1300));
+            execl("reader", NULL);
         } else {
-            cout << "Parent process." << getpid() <<endl;
+            continue;
         }
+
     }
+    for(int i = 0; i < 5; i++) {
+        int pid = fork();
+        if (pid == 0) {    
+            std::this_thread::sleep_for(std::chrono::milliseconds(995));
+            execl("writer", NULL);
+        } else {
+            continue;
+        }
+
+    }
+
     for (int i = 0; i < 10; i++) {
         wait(NULL);
     }

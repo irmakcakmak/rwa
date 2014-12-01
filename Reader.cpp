@@ -38,12 +38,12 @@ Reader::Reader(int loopCount) {
 }
 
 void Reader::read() {
-    key_t key = ftok("/Users/irmak/Dropbox/SWE/SWE573/2/p2/code/hede.txt", 'E');
+    key_t key = ftok("hede.txt", 'E');
     log("Accessing to shared memory segment...");
     int shmid = shmget(key, sizeof(int), 0666);
     int *data = (int *)shmat(shmid, (void *)0, 0);
     log("Shared memory region is accessed!");
-    std::this_thread::sleep_for(std::chrono::milliseconds(5231));
+    std::this_thread::sleep_for(std::chrono::milliseconds(2731));
     log("Value of the shared memory: " + to_string(*data));
     log("Detaching from shared memory segment...");
     if(shmdt(data) == -1) {

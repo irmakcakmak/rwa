@@ -11,6 +11,7 @@
 #include <string>
 
 #define SEM_KEY (1986)
+#define READ_KEY (1987)
 
 using namespace std;
 
@@ -23,6 +24,15 @@ int main(void) {
     int *data = (int *)shmat(shmid, (void *)0, 0);
     *data = 0;
     cout << "Shared memory initialization is complete..." << endl;
+
+    key_t readKey = ftok("readcount.txt", 'E');
+    cout << "Creating shared memory for read count." << endl;
+    int readShmid = shmget(readKey, sizeof(int), 0666|IPC_CREAT);
+    cout << "Initializing shared memory variable to 0" << endl;
+    int *readCount = (int *)shmat(readShmid, (void *)0, 0);
+    *readCount = 0;
+    cout << "Shared memory for read count initialization is complete..." << endl;
+
 
     cout << "Initializing write semaphore...";
     union semun {
@@ -40,6 +50,15 @@ int main(void) {
         exit(EXIT_FAILURE);
     } else {
         cout << "Semaphore initialized: " << SEM_KEY << endl;
+    }
+
+    int readid = semget(READ_KEY, 1, 0666|IPC_CREAT);
+    if(semctl(readid, 0, SETVAL, arg) < 0) {
+        cout << "Error init read sema." << endl;
+        perror("REASON: ");
+        exit(EXIT_FAILURE);    
+    } else {
+        cout << "Read semaphore init." << READ_KEY << endl;    
     }
 
     srand(time(NULL));
@@ -73,10 +92,13 @@ int main(void) {
     } else {
         cout << "Detached" << endl;
     }
+    shmdt(readCount);
 
     cout << "Releasing shared memory" << endl;
     shmctl(shmid, IPC_RMID, NULL);
+    shmctl(readShmid, IPC_RMID, NULL);
     cout << "Deleting semaphore" << endl;
     semctl(semid, 0, IPC_RMID);
+    semctl(readid, 0, IPC_RMID);
     return 0;
 }

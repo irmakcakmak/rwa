@@ -49,7 +49,6 @@ int Writer::down() {
         perror("REASON: ");    
     }
     int retval = semop(id, ops, 1);
-    log("Down sem_id: " + to_string(this->semaphoreId));
     if (retval == 0) {
         log("Semaphore down is successful.");
         return(1);
